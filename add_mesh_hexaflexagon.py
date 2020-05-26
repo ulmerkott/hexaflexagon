@@ -14,15 +14,15 @@ bl_info = {
 
 import bpy
 from bpy.types import Operator
-from bpy.props import FloatProperty
+from bpy.props import FloatProperty, IntProperty
 from bpy_extras.object_utils import AddObjectHelper, object_data_add
 from mathutils import Vector
 
 
 def add_hexaflexagon(self, context):
-    sides = 3
-    # Add one face for glueing with the first face
-    faces = sides * 6 + 1
+
+    # Add one extra face for glueing with the first face
+    faces = self.sides * 6 + 1
     verts_count = faces + 2
 
     verts = []
@@ -40,19 +40,16 @@ def add_hexaflexagon(self, context):
     for v in range(0, verts_count):
         verts.append(Vector((v * (self.scale / 2), height * upper, 0)))
 
-        # need atleast 3 vertices for one face
+        # Need atleast 3 vertices for one face
         if v >= 2:
             faces.append([v-2, v-1, v])
 
         # Switch between upper/lower for each iteration
         upper = not upper 
 
-    print(verts)
-    print(faces)
-
     mesh = bpy.data.meshes.new(name="Hexaflexagon")
     mesh.from_pydata(verts, edges, faces)
-    # useful for development when the mesh may be invalid.
+    # Useful for development when the mesh may be invalid.
     mesh.validate(verbose=True)
     object_data_add(context, mesh, operator=self)
  
@@ -66,13 +63,18 @@ class OBJECT_OT_add_hexaflexagon(Operator, AddObjectHelper):
     scale: FloatProperty(
         name="Scale",
         default=1.0,
-        description="scaling",
+        description="scaling"
+    )
+
+    sides: IntProperty(
+        name="Sides",
+        description="Number of sides in the Hexaflexagon",
+        min=3,
+        default=3
     )
 
     def execute(self, context):
-
         add_hexaflexagon(self, context)
-
         return {'FINISHED'}
 
 
