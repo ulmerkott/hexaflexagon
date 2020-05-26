@@ -22,7 +22,7 @@ from mathutils import Vector
 def add_hexaflexagon(self, context):
 
     # Add one extra face for glueing with the first face
-    faces = self.sides * 6 + 1
+    faces = self.sides * 3 + 1
     verts_count = faces + 2
 
     verts = []
@@ -49,8 +49,10 @@ def add_hexaflexagon(self, context):
 
     mesh = bpy.data.meshes.new(name="Hexaflexagon")
     mesh.from_pydata(verts, edges, faces)
+
     # Useful for development when the mesh may be invalid.
     mesh.validate(verbose=True)
+
     object_data_add(context, mesh, operator=self)
  
 
