@@ -3,7 +3,7 @@
 bl_info = {
     "name": "Hexaflexagon",
     "author": "Eric Svärd",
-    "version": (0, 1),
+    "version": (0, 2),
     "blender": (2, 80, 0),
     "location": "View3D > Add > Mesh > New Object",
     "description": "Adds a new Hexaflexagon Mesh Object",
