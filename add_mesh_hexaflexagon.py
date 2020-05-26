@@ -60,7 +60,7 @@ class OBJECT_OT_add_hexaflexagon(Operator, AddObjectHelper):
     """Create a new Hexaflexagon mesh object"""
     bl_idname = "mesh.add_hexaflexagon"
     bl_label = "Add Hexaflexagon"
-    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
+    bl_options = {'REGISTER', 'UNDO',}
 
     scale: FloatProperty(
         name="Scale",
