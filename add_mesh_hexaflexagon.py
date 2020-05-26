@@ -1,14 +1,14 @@
-# GPL # "author": "Eric Svärd, ulmerkott, (http://www.github.com/ulmerkott)"
+# GPL # "author": "Eric Svärd, ulmerkott, (https://www.github.com/ulmerkott)"
 
 bl_info = {
-    "name": "New Hexaflexagon",
+    "name": "Hexaflexagon",
     "author": "Eric Svärd",
     "version": (0, 1),
     "blender": (2, 80, 0),
     "location": "View3D > Add > Mesh > New Object",
     "description": "Adds a new Hexaflexagon Mesh Object",
     "warning": "",
-    "doc_url": "",
+    "doc_url": "https://github.com/ulmerkott/hexaflexagon",
     "category": "Add Mesh",
 }
 
