@@ -20,41 +20,70 @@ from mathutils import Vector
 
 
 def add_hexaflexagon(self, context):
+    mesh = create_hexaflexagon_mesh(self.scale, self.sides)
+    object= object_data_add(context, mesh, operator=self)
+    generate_uv_map(object)
 
+def create_hexaflexagon_mesh(scale, sides):
     # Add one extra face for glueing with the first face
-    faces = self.sides * 3 + 1
-    verts_count = faces + 2
+    faces = sides * 3 + 1
+    vert_cols = faces + 2
 
     verts = []
+    verts_backside = []
     faces = []
-    edges = []
+    faces_backside = []
 
     # Calculate height with help from old friend Pythagoras
-    height = (self.scale**2 - (self.scale / 2.0)**2)**0.5
+    height = (scale**2 - (scale / 2.0)**2)**0.5
 
-    # Start with the lower left triangle vertex.
-    # upper ->   2---4---*
-    #           / \ / \ /
-    # lower -> 1---3---5
-    upper = False
-    for v in range(0, verts_count):
-        verts.append(Vector((v * (self.scale / 2), height * upper, 0)))
+    # Start with the upper left triangle vertex.
+    # col      -> 0 1 2 3 4 5
+    # upper    -> 0---3---6 ...
+    #              \ / \ / \ /
+    # lower    ->   2---5---8
+    # backside ->  / \ / \ / \
+    #             1---4---7 ...
+    upper = True
+    for col in range(0, vert_cols):
+        verts.append(Vector((col * (scale / 2), height * upper, 0)))
 
-        # Need atleast 3 vertices for one face
-        if v >= 2:
-            faces.append([v-2, v-1, v])
+        # Create mirrored backside vertex
+        if upper:
+            verts.append(Vector((col * (scale / 2), -height * upper, 0)))
+
+        # We can't create faces between first two columns
+        if col >= 2:
+            s = len(verts)
+            # Upper face
+            if col%2 == 0:
+                faces.append([s-5, s-3, s-2])
+            else:
+                faces.append([s-4, s-2, s-1])
+            # Back side face
+            faces.append([s-4, s-3, s-1])
 
         # Switch between upper/lower for each iteration
         upper = not upper 
 
     mesh = bpy.data.meshes.new(name="Hexaflexagon")
-    mesh.from_pydata(verts, edges, faces)
+    mesh.from_pydata(verts, [], faces)
 
     # Useful for development when the mesh may be invalid.
     mesh.validate(verbose=True)
+    return mesh
 
-    object_data_add(context, mesh, operator=self)
- 
+
+def generate_uv_map(obj):
+    # TODO: Generate a usable UV map
+    obj.data.uv_layers.new(name="HexaflexagonUV")
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    bpy.ops.object.editmode_toggle()
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.object.editmode_toggle()
+    obj.select_set(False)
+
 
 class OBJECT_OT_add_hexaflexagon(Operator, AddObjectHelper):
     """Create a new Hexaflexagon mesh object"""
