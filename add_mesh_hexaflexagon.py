@@ -14,7 +14,7 @@ bl_info = {
 
 import bpy
 from bpy.types import Operator
-from bpy.props import FloatProperty, IntProperty
+from bpy.props import FloatProperty, EnumProperty
 from bpy_extras.object_utils import AddObjectHelper, object_data_add
 from mathutils import Vector
 
@@ -26,7 +26,7 @@ def add_hexaflexagon(self, context):
 
 def create_hexaflexagon_mesh(scale, sides):
     # Add one extra face for glueing with the first face
-    faces = sides * 3 + 1
+    faces = int(sides) * 3 + 1
     vert_cols = faces + 2
 
     verts = []
@@ -64,7 +64,7 @@ def create_hexaflexagon_mesh(scale, sides):
             faces.append([s-4, s-3, s-1])
 
         # Switch between upper/lower for each iteration
-        upper = not upper 
+        upper = not upper
 
     mesh = bpy.data.meshes.new(name="Hexaflexagon")
     mesh.from_pydata(verts, [], faces)
@@ -91,18 +91,19 @@ class OBJECT_OT_add_hexaflexagon(Operator, AddObjectHelper):
     bl_label = "Add Hexaflexagon"
     bl_options = {'REGISTER', 'UNDO',}
 
+    sides: EnumProperty(
+                    items=(("3", "Trihexaflexagon", ""),
+                            ("6", "Hexahexaflexagon", "")),
+                    name="Sides",
+                    description="Hexaflexagon type"
+                    )
+
     scale: FloatProperty(
         name="Scale",
         default=1.0,
         description="scaling"
     )
 
-    sides: IntProperty(
-        name="Sides",
-        description="Number of sides in the Hexaflexagon",
-        min=3,
-        default=3
-    )
 
     def execute(self, context):
         add_hexaflexagon(self, context)
