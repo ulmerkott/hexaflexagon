@@ -125,13 +125,14 @@ def create_hexaflexagon_mesh(scale, sides):
 
 def generate_uv_map(obj):
     # TODO: Generate a usable UV map
-    obj.data.uv_layers.new(name="HexaflexagonUV")
+    uv_layer = obj.data.uv_layers.new(name="HexaflexagonUV")
     bpy.ops.object.select_all(action="DESELECT")
-    obj.select_set(True)
-    bpy.ops.object.editmode_toggle()
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.object.editmode_toggle()
-    obj.select_set(False)
+
+    # Make UV triangles equilateral
+    for i,uv_obj in uv_layer.data.items():
+        if (i+1)%3 == 0:
+            uv_obj.uv.x = 0.5
+            uv_obj.uv.y = 0.75**0.5 # sqrt(1^2 - (1/2)^2)
 
 
 class OBJECT_OT_add_hexaflexagon(Operator, AddObjectHelper):
