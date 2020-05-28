@@ -20,13 +20,56 @@ from mathutils import Vector
 
 
 def add_hexaflexagon(self, context):
-    mesh = create_hexaflexagon_mesh(self.scale, self.sides)
+    mesh = create_hexaflexagon_mesh(self.scale, int(self.sides))
     object= object_data_add(context, mesh, operator=self)
+    create_side_materials(object, int(self.sides))
     generate_uv_map(object)
 
+
+def create_side_materials(object, sides):
+    # Trihexaflexagon face ordering
+    #  +---+---+---+---+---+
+    #   \2/1\1/3\3/2\2/1\1/
+    #    +---+---+---+---+
+    #   /3\3/2\2/1\1/3\3/2\
+    #  +---+---+---+---+---+
+    # Ordering per face index
+    trihexa_order = [2,3,3,1,1,2,2,3,3,1,1,2,2,3,3,1,1,2]
+
+    # Hexahexaflexagon face ordering
+    #  +---+---+---+---+---+---+---+---+---+
+    #   \2/3\1/2\3/1\2/3\1/2\3/1\2/3\1/2\3/1\
+    #    +---+---+---+---+---+---+---+---+---+
+    #   /4\4/5\5/6\6/4\4/5\5/6\6/4\4/5\5/6\6/
+    #  +---+---+---+---+---+---+---+---+---+
+    # Ordering per face index
+    hexahexa_order = [2,4,4,3,1,5,5,2,3,6,6,1,2,4,4,3,1,5,
+                      5,2,3,6,6,1,2,4,4,3,1,5,5,2,3,6,6,1]
+
+    side_colors = [(1, 0, 0, 0), # red
+                   (0, 1, 0, 0), # green
+                   (0, 0, 1, 0), # blue
+                   (1, 1, 0, 0), # yellow
+                   (0, 1, 1, 0), # cyan
+                   (1, 0, 1, 0)] # magenta
+
+    # Add new material for each side and apply a distinct diffuse color
+    for side in range(1, sides + 1):
+        mat = bpy.data.materials.new(name=f"Side_{side}")
+        mat.diffuse_color = side_colors[side-1]
+        object.data.materials.append(mat)
+
+    face_order = trihexa_order
+    if sides > 3:
+        face_order = hexahexa_order
+
+    # Assign faces to corresponding side material
+    for index,face in enumerate(face_order):
+        vertices = object.data.polygons[index].material_index = face-1
+
+
 def create_hexaflexagon_mesh(scale, sides):
-    # Add one extra face for glueing with the first face
-    faces = int(sides) * 3 + 1
+    faces = sides * 3
     vert_cols = faces + 2
 
     verts = []
@@ -53,6 +96,12 @@ def create_hexaflexagon_mesh(scale, sides):
             verts.append(Vector((col * (scale / 2), -height * upper, 0)))
 
         # We can't create faces between first two columns
+        # Face indices:
+        #  +---+---+ ...
+        #   \0/3\4/7\
+        #    +---+---+..
+        #   /1\2/5\6/
+        #  +---+---+ ...
         if col >= 2:
             s = len(verts)
             # Upper face
@@ -92,11 +141,11 @@ class OBJECT_OT_add_hexaflexagon(Operator, AddObjectHelper):
     bl_options = {'REGISTER', 'UNDO',}
 
     sides: EnumProperty(
-                    items=(("3", "Trihexaflexagon", ""),
-                            ("6", "Hexahexaflexagon", "")),
-                    name="Sides",
-                    description="Hexaflexagon type"
-                    )
+        items=(("3", "Trihexaflexagon", "Three sided hexaflexagon"),
+               ("6", "Hexahexaflexagon", "Six sided hexaflexagon")),
+        name="Sides",
+        description="Hexaflexagon type"
+    )
 
     scale: FloatProperty(
         name="Scale",
