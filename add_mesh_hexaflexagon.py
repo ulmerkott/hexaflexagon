@@ -26,37 +26,49 @@ def add_hexaflexagon(self, context):
     generate_uv_map(object)
 
 
+# Generate a list of distinct colors. Maximum count is 6.
+def generate_colors(count):
+    max_colors = 6
+    if count > max_colors:
+        raise(ValueError(f"Maximum number of colors are {max_colors}"))
+
+    colors = []
+    for index in range(count):
+        # Generate a list of base colors from binary numbers where each color
+        # takes the form of [r, g, b, 0]
+        color = list(map(int, format(index + 1, "#05b")[2:])) + [0]
+        colors.append(color)
+
+    return colors
+
+
 def create_side_materials(object, sides):
-    # Trihexaflexagon face ordering
+    # Define face order. Order depends on how the flexagon gets folded.
+    # Order is per face index in the mesh.
+
+    # Trihexaflexagon face order.
     #  +---+---+---+---+---+
     #   \2/1\1/3\3/2\2/1\1/
     #    +---+---+---+---+
     #   /3\3/2\2/1\1/3\3/2\
     #  +---+---+---+---+---+
-    # Ordering per face index
     trihexa_order = [2,3,3,1,1,2,2,3,3,1,1,2,2,3,3,1,1,2]
 
-    # Hexahexaflexagon face ordering
+    # Hexahexaflexagon face order.
     #  +---+---+---+---+---+---+---+---+---+
     #   \2/3\1/2\3/1\2/3\1/2\3/1\2/3\1/2\3/1\
     #    +---+---+---+---+---+---+---+---+---+
     #   /4\4/5\5/6\6/4\4/5\5/6\6/4\4/5\5/6\6/
     #  +---+---+---+---+---+---+---+---+---+
-    # Ordering per face index
     hexahexa_order = [2,4,4,3,1,5,5,2,3,6,6,1,2,4,4,3,1,5,
                       5,2,3,6,6,1,2,4,4,3,1,5,5,2,3,6,6,1]
 
-    side_colors = [(1, 0, 0, 0), # red
-                   (0, 1, 0, 0), # green
-                   (0, 0, 1, 0), # blue
-                   (1, 1, 0, 0), # yellow
-                   (0, 1, 1, 0), # cyan
-                   (1, 0, 1, 0)] # magenta
+    side_colors = generate_colors(sides)
 
     # Add new material for each side and apply a distinct diffuse color
     for side in range(1, sides + 1):
-        mat = bpy.data.materials.new(name=f"Side_{side}")
-        mat.diffuse_color = side_colors[side-1]
+        mat = bpy.data.materials.new(name = f"Side_{side}")
+        mat.diffuse_color = side_colors[side - 1]
         object.data.materials.append(mat)
 
     face_order = trihexa_order
@@ -65,12 +77,12 @@ def create_side_materials(object, sides):
 
     # Assign faces to corresponding side material
     for index,face in enumerate(face_order):
-        vertices = object.data.polygons[index].material_index = face-1
+        vertices = object.data.polygons[index].material_index = face - 1
 
 
 def create_hexaflexagon_mesh(scale, sides):
     faces = sides * 3
-    vert_cols = faces + 2
+    vert_columns = faces + 2
 
     verts = []
     verts_backside = []
