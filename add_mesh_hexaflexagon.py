@@ -100,24 +100,24 @@ def create_hexaflexagon_mesh(scale, sides):
     # backside ->  / \ / \ / \
     #             1---4---7 ...
     upper = True
-    for col in range(0, vert_cols):
-        verts.append(Vector((col * (scale / 2), height * upper, 0)))
+    for column in range(0, vert_columns):
+        verts.append([column * (scale / 2), height * upper, 0])
 
         # Create mirrored backside vertex
         if upper:
-            verts.append(Vector((col * (scale / 2), -height * upper, 0)))
+            verts.append([column * (scale / 2), -height * upper, 0])
 
-        # We can't create faces between first two columns
         # Face indices:
         #  +---+---+ ...
         #   \0/3\4/7\
         #    +---+---+..
         #   /1\2/5\6/
         #  +---+---+ ...
-        if col >= 2:
+        # We can't create faces between first two columns
+        if column >= 2:
             s = len(verts)
             # Upper face
-            if col%2 == 0:
+            if column % 2 == 0:
                 faces.append([s-5, s-3, s-2])
             else:
                 faces.append([s-4, s-2, s-1])
@@ -142,7 +142,7 @@ def generate_uv_map(obj):
 
     # Make UV triangles equilateral
     for i,uv_obj in uv_layer.data.items():
-        if (i+1)%3 == 0:
+        if (i + 1) % 3 == 0:
             uv_obj.uv.x = 0.5
             uv_obj.uv.y = 0.75**0.5 # sqrt(1^2 - (1/2)^2)
 
