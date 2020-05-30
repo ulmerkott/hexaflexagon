@@ -156,8 +156,8 @@ class OBJECT_OT_add_hexaflexagon(Operator, AddObjectHelper):
     sides: EnumProperty(
         items=(("3", "Trihexaflexagon", "Three sided hexaflexagon"),
                ("6", "Hexahexaflexagon", "Six sided hexaflexagon")),
-        name="Sides",
-        description="Hexaflexagon type"
+        name="Type",
+        description="This will affect the number of sides."
     )
 
     scale: FloatProperty(
@@ -165,6 +165,16 @@ class OBJECT_OT_add_hexaflexagon(Operator, AddObjectHelper):
         default=1.0,
         description="scaling"
     )
+
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "sides")
+        layout.prop(self, "scale", expand=True)
+
+        layout.prop(self, 'align', expand=True)
+        layout.prop(self, 'location', expand=True)
+        layout.prop(self, 'rotation', expand=True)
 
 
     def execute(self, context):
