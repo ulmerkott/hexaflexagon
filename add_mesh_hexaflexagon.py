@@ -16,7 +16,7 @@ import bpy
 from bpy.types import Operator
 from bpy.props import FloatProperty, EnumProperty
 from bpy_extras.object_utils import AddObjectHelper, object_data_add
-from mathutils import Vector
+import mathutils, math
 
 
 def add_hexaflexagon(self, context):
@@ -76,7 +76,7 @@ def create_side_materials(object, sides):
         face_order = hexahexa_order
 
     # Assign faces to corresponding side material
-    for index,face in enumerate(face_order):
+    for index, face in enumerate(face_order):
         vertices = object.data.polygons[index].material_index = face - 1
 
 
@@ -135,16 +135,65 @@ def create_hexaflexagon_mesh(scale, sides):
     return mesh
 
 
+# Get polygons that belong to a side in the folded flexagon.
+# Side number start with 0
+def get_side_polygons(obj, side):
+    side_polygons = []
+    for polygon in obj.data.polygons:
+        if polygon.material_index == side:
+            side_polygons.append(polygon)
+            
+    return side_polygons
+
+
 def generate_uv_map(obj):
-    # TODO: Generate a usable UV map
     uv_layer = obj.data.uv_layers.new(name="HexaflexagonUV")
     bpy.ops.object.select_all(action="DESELECT")
 
     # Make UV triangles equilateral
     for i,uv_obj in uv_layer.data.items():
-        if (i + 1) % 3 == 0:
+        if (i+1)%3 == 0:
             uv_obj.uv.x = 0.5
             uv_obj.uv.y = 0.75**0.5 # sqrt(1^2 - (1/2)^2)
+
+    # Rotate triangle UVs to build up the folded sides and scale the sides to
+    # fit the UV layer.
+    rotation = math.radians(360 / 6.0)
+    scale = 1 / 3 * 0.5 # This will fit 3 sides per row
+    height = scale * 2 * 0.75**0.5
+    width = scale * 2
+    row, col = 0, 0
+    row_full = False
+    for side in range(len(obj.material_slots)):
+        for i, side_poly in enumerate(get_side_polygons(obj, side)):
+            
+            rot_matrix = mathutils.Matrix.Rotation(rotation * i, 2, 'X')
+            scale_matrix = mathutils.Matrix.Scale(scale, 2)
+
+            # Rotate, scale and move the UV for each side polygon loop_index
+            for loop_index in side_poly.loop_indices:
+                # Combine transformations and apply
+                matrix = rot_matrix @ scale_matrix
+                uv = uv_layer.data[loop_index].uv
+                uv_layer.data[loop_index].uv = uv @ matrix
+                
+                # Move one column right
+                uv.x += width * col + width / 2
+                uv.y += height * row + height / 2
+
+                # Check if row is full
+                # TODO: Handle the rounding error below
+                if uv_layer.data[loop_index].uv.x > (1.001 - width):
+                    row_full = True
+
+        # Switch to next row if column is full
+        if row_full:
+            col = 0
+            row += 1
+            row_full = False
+            continue
+
+        col += 1    
 
 
 class OBJECT_OT_add_hexaflexagon(Operator, AddObjectHelper):
@@ -156,8 +205,8 @@ class OBJECT_OT_add_hexaflexagon(Operator, AddObjectHelper):
     sides: EnumProperty(
         items=(("3", "Trihexaflexagon", "Three sided hexaflexagon"),
                ("6", "Hexahexaflexagon", "Six sided hexaflexagon")),
-        name="Type",
-        description="This will affect the number of sides."
+        name="Hexaflexagon type",
+        description="Hexaflexagon type. Will affect the number of sides."
     )
 
     scale: FloatProperty(
