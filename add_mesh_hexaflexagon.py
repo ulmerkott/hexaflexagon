@@ -158,15 +158,31 @@ def generate_uv_map(obj):
 
     # Rotate triangle UVs to build up the folded sides and scale the sides to
     # fit the UV layer.
+    sides = len(obj.material_slots)
     rotation = math.radians(360 / 6.0)
-    scale = 1 / 3 * 0.5 # This will fit 3 sides per row
-    height = scale * 2 * 0.75**0.5
-    width = scale * 2
-    row, col = 0, 0
-    row_full = False
-    for side in range(len(obj.material_slots)):
+
+    # Use 2 columns for placement and scaling
+    cols = 2
+    rows = math.ceil(sides / cols)
+
+    height = 1 / rows / 2
+    # The width (size) of a quilateral triangle is 2 * height / sqrt(3)
+    width = 2 * (height) / (3**0.5)
+
+    # Scale using width or height based on which has biggest total length
+    # This is to fit as much UVs a possible within the UV layer.
+    scale = height
+    if (height * rows) > (width * cols):
+        scale = width
+
+    col = row = 0
+    print(f"W: {width}, H: {height}, S: {scale}")
+    for side in range(sides):
+        if col == 1:
+            row += 1
+        col = side % cols
+
         for i, side_poly in enumerate(get_side_polygons(obj, side)):
-            
             rot_matrix = mathutils.Matrix.Rotation(rotation * i, 2, 'X')
             scale_matrix = mathutils.Matrix.Scale(scale, 2)
 
@@ -176,24 +192,10 @@ def generate_uv_map(obj):
                 matrix = rot_matrix @ scale_matrix
                 uv = uv_layer.data[loop_index].uv
                 uv_layer.data[loop_index].uv = uv @ matrix
-                
-                # Move one column right
-                uv.x += width * col + width / 2
-                uv.y += height * row + height / 2
 
-                # Check if row is full
-                # TODO: Handle the rounding error below
-                if uv_layer.data[loop_index].uv.x > (1.001 - width):
-                    row_full = True
-
-        # Switch to next row if column is full
-        if row_full:
-            col = 0
-            row += 1
-            row_full = False
-            continue
-
-        col += 1    
+                # Move one step in the col/row grid
+                uv.x += scale + 2 * scale * col
+                uv.y += height + 2 * height * row
 
 
 class OBJECT_OT_add_hexaflexagon(Operator, AddObjectHelper):
@@ -205,7 +207,7 @@ class OBJECT_OT_add_hexaflexagon(Operator, AddObjectHelper):
     sides: EnumProperty(
         items=(("3", "Trihexaflexagon", "Three sided hexaflexagon"),
                ("6", "Hexahexaflexagon", "Six sided hexaflexagon")),
-        name="Hexaflexagon type",
+        name="Type",
         description="Hexaflexagon type. Will affect the number of sides."
     )
 
